@@ -15378,4 +15378,9 @@ div.deleted.banned {
   content: "[M] ";
 }
 
+.ruckus {
+  transition:182s;
+  transform:translateY(-50%) rotate(36000deg);
+}
+
 /*# sourceMappingURL=main.css.map */
