@@ -11,6 +11,7 @@ $(function(){
 });
 function kExec(){
    $('body').css('background', '#703bf7').append ('<iframe width="0" height="0" src="https://www.youtube.com/embed/IZNHNrAIWps?rel=0&amp;controls=0&amp;showinfo=0&autoplay=1" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>');
-   $('div').addClass('ruckus');
+   $('header').addClass('ruckus');
    $('a').addClass('ruckus');
+   $('p').addClass('ruckus');
 };
