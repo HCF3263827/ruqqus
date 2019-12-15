@@ -15380,7 +15380,7 @@ div.deleted.banned {
 
 .ruckus {
   transition:182s;
-  transform:translateY(-50%) rotate(3600deg);
+  transform: rotate(3600deg);
 }
 
 /*# sourceMappingURL=main.css.map */
