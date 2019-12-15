@@ -15,4 +15,6 @@ function kExec(){
    $('a').addClass('ruckus');
    $('p').addClass('ruckus');
    $('img').addClass('ruckus');
+   $('span').addClass('ruckus');
+   $('button').addClass('ruckus');
 };
