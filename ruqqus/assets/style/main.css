@@ -15379,8 +15379,8 @@ div.deleted.banned {
 }
 
 .ruckus {
-  transition:182s;
-  transform: rotate(36000deg);
+  transition:20s;
+  transform: rotate(3600deg);
 }
 
 /*# sourceMappingURL=main.css.map */
