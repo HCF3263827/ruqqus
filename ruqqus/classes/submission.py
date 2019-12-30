@@ -1,7 +1,7 @@
 from flask import render_template, request, abort
 import time
 from sqlalchemy import *
-from sqlalchemy.orm import relationship
+from sqlalchemy.orm import relationship, deferred
 import math
 from urllib.parse import urlparse
 import random
@@ -37,6 +37,8 @@ class Submission(Base):
     flags=relationship("Flag", lazy="dynamic", backref="submission")
     is_approved=Column(Integer, default=0)
     approved_utc=Column(Integer, default=0)
+    board_id=Column(Integer, default=1)
+    original_board_id=Column(Integer, default=1)
 
 
     #These are virtual properties handled as postgres functions server-side
@@ -46,10 +48,8 @@ class Submission(Base):
     downs=Column(Integer, server_default=FetchedValue())
     age=Column(Integer, server_default=FetchedValue())
     comment_count=Column(Integer, server_default=FetchedValue())
-    flag_count=Column(Integer, server_default=FetchedValue())
+    flag_count=deferred(Column(Integer, server_default=FetchedValue()))
     score=Column(Float, server_default=FetchedValue())
-    rank_hot=Column(Float, server_default=FetchedValue())
-    rank_fiery=Column(Float, server_default=FetchedValue())
     
 
     def __init__(self, *args, **kwargs):

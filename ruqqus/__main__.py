@@ -4,11 +4,14 @@ from flask import *
 from flask_caching import Cache
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
+from time import sleep
 
 from flaskext.markdown import Markdown
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, relationship
 from sqlalchemy import *
+import threading
+import requests
 
 from werkzeug.contrib.fixers import ProxyFix
 
@@ -35,7 +38,6 @@ app.config["CACHE_REDIS_URL"]=environ.get("REDIS_URL")
 app.config["CACHE_DEFAULT_TIMEOUT"]=60
 
 Markdown(app)
-
 cache=Cache(app)
 
 limit_url=environ.get("HEROKU_REDIS_PURPLE_URL", environ.get("HEROKU_REDIS_ORANGE_URL"))
@@ -59,29 +61,66 @@ import ruqqus.classes
 from ruqqus.routes import *
 import ruqqus.helpers.jinja2
 
-if __name__ == "__main__":
 
-    app.run(host="0.0.0.0", port="8000")
 
-else:
+#enforce https
+@app.before_request
+def before_request():
+    
+    #check ip ban
+    if db.query(ruqqus.classes.IP).filter_by(addr=request.remote_addr).first():
+        abort(403)
 
-    #enforce https
-    @app.before_request
-    def before_request():
-        if request.url.startswith('http://') and "localhost" not in app.config["SERVER_NAME"]:
-            url = request.url.replace('http://', 'https://', 1)
-            return redirect(url, code=301)
+    #check useragent ban
+    if db.query(ruqqus.classes.Agent).filter(ruqqus.classes.Agent.kwd.in_(request.headers.get('User-Agent','No Agent').split())).first():
+        abort(403)
+        
+    if request.url.startswith('http://') and "localhost" not in app.config["SERVER_NAME"]:
+        url = request.url.replace('http://', 'https://', 1)
+        return redirect(url, code=301)
 
-        if not session.get("session_id"):
-            session["session_id"]=secrets.token_hex(16)
+    if not session.get("session_id"):
+        session["session_id"]=secrets.token_hex(16)
 
-        db.rollback()
 
-    @app.after_request
-    def after_request(response):
-        response.headers.add('Access-Control-Allow-Headers', "Origin, X-Requested-With, Content-Type, Accept, x-auth"
-                             )
-        return response
+
+    db.rollback()
+
+def log_event(name, link):
+
+    sleep(10)
+
+    x=requests.get(link)
+
+    if x.status_code != 200:
+        return
+
+
+    text=f'> **{name}**\r> {link}'
+
+
+
+    url=os.environ.get("DISCORD_WEBHOOK")
+    headers={"Content-Type":"application/json"}
+    data={"username":"ruqqus",
+          "content": text
+          }
+
+    x=requests.post(url, headers=headers, json=data)
+    print(x.status_code)
+    
+
+@app.after_request
+def after_request(response):
+    response.headers.add('Access-Control-Allow-Headers', "Origin, X-Requested-With, Content-Type, Accept, x-auth"
+                         )
+
+    if request.method=="POST" and response.status_code in [301, 302] and request.path=="/signup":
+        link=f'https://{app.config["SERVER_NAME"]}/@{request.form.get("username")}'
+        thread=threading.Thread(target=lambda:log_event(name="Account Signup", link=link))
+        thread.start()
+            
+    return response
 
     
     

@@ -108,10 +108,7 @@
   <div class="body">
     <ul class="no-bullets filter-list pl-0">
       <li class="filter-item">
-        <a class="filter-link" href="{{ v.permalink }}"><i class="fas fa-user-circle fa-width-rem"></i>Profile</a>
-      </li>
-      <li class="filter-item">
-        <a class="filter-link " href="{{ v.permalink }}/posts"><i class="fas fa-feather-alt fa-width-rem"></i>Your posts</a>
+        <a class="filter-link " href="{{ v.permalink }}"><i class="fas fa-feather-alt fa-width-rem"></i>Your posts</a>
       </li>
       <li class="filter-item">
         <a class="filter-link " href="{{ v.permalink }}/comments"><i class="fas fa-comment-dots fa-width-rem"></i>Your comments</a> 
@@ -177,7 +174,7 @@
 
     <div id="post-{{ p.base36id }}" class="card border-0 mt-3{% if p.is_banned %} banned{% endif %}{% if p.stickied %} stickied{% endif %}{% if voted==1 %} upvoted{% elif voted==-1 %} downvoted{% endif %}">
       <div class="d-flex flex-row-reverse flex-nowrap justify-content-end">
-        <div class="card-header bg-transparent border-0 d-flex flex-row flex-nowrap p-0 mt-4 mb-auto pl-3 ml-auto">
+        <div class="card-header bg-transparent border-0 d-flex flex-row flex-nowrap p-0 {% if p.body_html %} mt-4 mb-auto {% else %} my-auto {% endif %} pl-3 ml-auto">
           {% if p.url.endswith((".jpg",".png")) and p.domain_obj and p.domain_obj.show_thumbnail %}<a href="{{ p.url }}" rel="nofollow"><img src="{{ p.url }}" class="post-img d-none d-md-block" alt="Unable to anonymously load image"></a>{% endif %}
           <div class="dropdown show my-auto post-actions ml-4 d-none d-md-block">
             <a href="#" role="button" id="dropdownMoreLink" data-toggle="dropdown" aria-haspopup="true"
@@ -193,6 +190,9 @@
           <a class="dropdown-item" href="javascript:void(0)" data-toggle="modal" data-target="#reportPostModal" onclick="report_postModal('{{ p.base36id }}')"><i class="fas fa-flag"></i>Flag</a>
           {% endif %}
           {% if v %}
+{% if v.id==p.author_id and not v.is_banned %}
+	<a class="dropdown-item" href="javascript:void(0)" onclick="togglePostEdit()"><i class="fas fa-edit"></i>Edit</a>
+{% endif %}
           {% if v.admin_level >=1 %}
           {% if p.is_banned %}
           <a class="dropdown-item approveDropdownItem" id="moderate-post-{{ p.base36id }}" href="javascript:void(0)" onclick="approvePost('{{ p.base36id }}')"><i class="fas fa-clipboard-check"></i>Approve</a>
@@ -205,16 +205,29 @@
       </div>
     </div>
     <div class="card-block my-md-auto">
-      <div class="post-meta text-left d-block d-md-none mb-2">{% if p.stickied %}<i class="fas fa-thumbtack text-success fa-rotate--45" data-toggle="tooltip" data-placement="bottom" title="Sticky post"></i> <span>&#183;</span> {% endif %}<span data-toggle="tooltip" data-placement="bottom" data-delay='{"show":"700", "hide":"300"}' title="{{ p.created_date }}">{{ p.age_string }}</span> by <a href="{{ p.author.permalink }}">{{ p.author.username }}</a>{% if p.distinguish_level %} <i class="fad fa-shield text-admin" data-toggle="tooltip" data-placement="bottom" title="" data-original-title="Ruqqus Administrator, speaking officially"></i>{% endif %} <span>&#183;</span> ({{ p.domain }})</div>
+      <div class="post-meta text-left d-block d-md-none mb-2">{% if p.stickied %}<i class="fas fa-thumbtack text-success fa-rotate--45" data-toggle="tooltip" data-placement="bottom" title="Sticky post"></i> <span>&#183;</span> {% endif %}<span data-toggle="tooltip" data-placement="bottom" data-delay='{"show":"700", "hide":"300"}' title="{{ p.created_date }}">{{ p.age_string }}</span> by <a href="{{ p.author.permalink }}">{{ p.author.username }}</a>{% if p.distinguish_level %} <i class="fad fa-shield text-admin" data-toggle="tooltip" data-placement="bottom" title="" data-original-title="Ruqqus Administrator, speaking officially"></i>{% endif %} <span>&#183;</span> ({{ p.domain }}){% if p.edited_utc %} &#183; Edited <span data-toggle="tooltip" data-placement="bottom" data-delay='{"show":"700", "hide":"300"}' title="{{ edited_date }}">{{ p.edited_string }}</span>{% endif %}</div>
       <h1 class="card-title post-title text-left mb-2"><a target="_blank" href="{{ p.url }}">{{ p.title | safe }}</a></h1>
-      <div class="post-meta text-left d-none d-md-block">{% if p.stickied %}<i class="fas fa-thumbtack text-success fa-rotate--45" data-toggle="tooltip" data-placement="bottom" title="Sticky post"></i> <span>&#183;</span> {% endif %}<span data-toggle="tooltip" data-placement="bottom" data-delay='{"show":"700", "hide":"300"}' title="{{ p.created_date }}">{{ p.age_string }}</span> by <a href="{{ p.author.permalink }}">{{ p.author.username }}</a>{% if p.distinguish_level %} <i class="fad fa-shield text-admin" data-toggle="tooltip" data-placement="bottom" title="" data-original-title="Ruqqus Administrator, speaking officially"></i>{% endif %} <span>&#183;</span> ({{ p.domain }})</div>
+      <div class="post-meta text-left d-none d-md-block">{% if p.stickied %}<i class="fas fa-thumbtack text-success fa-rotate--45" data-toggle="tooltip" data-placement="bottom" title="Sticky post"></i> <span>&#183;</span> {% endif %}<span data-toggle="tooltip" data-placement="bottom" data-delay='{"show":"700", "hide":"300"}' title="{{ p.created_date }}">{{ p.age_string }}</span> by <a href="{{ p.author.permalink }}">{{ p.author.username }}</a>{% if p.distinguish_level %} <i class="fad fa-shield text-admin" data-toggle="tooltip" data-placement="bottom" title="" data-original-title="Ruqqus Administrator, speaking officially"></i>{% endif %} <span>&#183;</span> ({{ p.domain }}){% if p.edited_utc %} &#183; Edited <span data-toggle="tooltip" data-placement="bottom" data-delay='{"show":"700", "hide":"300"}' title="{{ edited_date }}">{{ p.edited_string }}</span>{% endif %}</div>
 
-
-      {% if p.body_html %}
-      <div class="post-body mt-3"> 
+      <div id="post-body" {% if p.body_html %}class="post-body mt-3"{% endif %}> 
         {{ p.body_html | safe }}
       </div>
-      {% endif %}
+      
+	{% if v and v.id==p.author_id and not v.is_banned %}
+	<div id="edit-post-body" class="d-none comment-write collapsed child">
+<form id="post-edit-form-{{ p.base36id }}" action="/edit_post/{{ p.base36id }}" method="post" class="input-group">
+				<input type="hidden" name="formkey" value="{{ v.formkey }}">
+				<input type="hidden" name="current_page" value="{{ request.path }}">
+				<textarea name="body" id="post-edit-box" form="post-edit-form-{{ p.base36id }}" class="comment-box form-control rounded" aria-label="With textarea" placeholder="Add your comment..." rows="3">{{ p.body }}</textarea> 
+				<div class="comment-format"> 
+					<small class="format pl-0"><i class="fas fa-bold" aria-hidden="true" onclick="makeReplyBold()" data-toggle="tooltip" data-placement="bottom" title="Bold"></i></small> 
+					<small class="format"><i class="fas fa-italic" aria-hidden="true" onclick="makeReplyItalics()" data-toggle="tooltip" data-placement="bottom" title="Italicize"></i></small> 
+					<small class="format"><i class="fas fa-quote-right" aria-hidden="true" onclick="makeReplyQuote()" data-toggle="tooltip" data-placement="bottom" title="Quote"></i></small> 
+					<small class="format"><i class="fas fa-link" aria-hidden="true"></i></small> 
+					<a href="javascript:void(0)" onclick="togglePostEdit()" class="btn btn-secondary ml-auto cancel-form">Cancel</a> 
+					<button form="post-edit-form-{{ p.base36id }}" class="btn btn-primary ml-2">Save Edit</button> </div> </form>
+	</div>
+	{% endif %}
 
     </div>
 
@@ -222,7 +235,7 @@
 
     {% if v %}
 
-    <div id="voting" class="voting d-none d-md-block mb-auto mr-3">
+    <div id="voting" class="voting d-none d-md-block {% if p.body_html %} mb-auto {% else %} my-auto {% endif %} mr-3">
       <div id="post-{{ p.base36id }}-up" class="arrow-up mx-auto" {% if voted==1 %}onclick="vote('{{ p.base36id }}','0')"{% elif voted>-2 %}onclick="vote('{{ p.base36id }}','1')"{% endif %}>
       </div>
       <span id="post-{{ p.base36id }}-score-up" class="score-up text-muted{% if voted!=1 %} d-none{% endif %}">{{ score+1-adjust }}</span>
@@ -234,7 +247,7 @@
 
     {% else %}
 
-    <div id="voting" class="voting d-none d-md-block mb-auto mr-3">
+    <div id="voting" class="voting d-none d-md-block {% if p.body_html %} mb-auto {% else %} my-auto {% endif %} mr-3">
       <div id="post-{{ p.base36id }}-up" class="arrow-up mx-auto" onclick="location.href='/login';">
       </div>
       <span id="post-{{ p.base36id }}-score-up" class="score-up text-muted{% if voted!=1 %} d-none{% endif %}">{{ score+1-adjust }}</span>
@@ -282,6 +295,9 @@
                             <a class="dropdown-item d-none" href="#"><i class="fas fa-save"></i>Save</a>
                             <a class="dropdown-item d-none" href="#"><i class="fas fa-flag"></i>Flag</a>
                             {% if v %}
+{% if v.id==p.author_id and not v.is_banned %}
+	<a class="dropdown-item" href="javascript:void(0)" onclick="togglePostEdit()"><i class="fas fa-edit"></i>Edit</a>
+{% endif %}
 {% if v.admin_level >=1 %}
     {% if p.is_banned %}
                             <a id="moderate-post-{{ p.base36id }}" href="javascript:void(0)" onclick="approvePost('{{ p.base36id }}')"><i class="fas fa-clipboard-check"></i>Approve</a>
@@ -289,6 +305,7 @@
                             <a id="moderate-post-{{ p.base36id }}" href="javascript:void(0)" onclick="removePost('{{ p.base36id }}')"><i class="fas fa-trash-alt"></i>Remove</a>
                                 {% endif %}
 {% endif %}
+
 {% endif %}
                           </div>
                         </div>
